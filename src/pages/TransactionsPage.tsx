@@ -6,6 +6,7 @@ import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import Button from '../components/ui/Button';
+import { toast } from 'react-toastify';
 
 export default function TransactionsPage() {
   const projects = useLiveQuery(()=> db.projects.toArray(), []);
@@ -37,7 +38,7 @@ export default function TransactionsPage() {
 
   const onCreate = async () => {
     if (!projectId || !partyId || !flatId || !bankAmount || !cashAmount || !transactionDate) {
-      alert('Please fill in all fields before creating the transaction.');
+      toast.error('Please fill in all fields before creating the transaction.');
       return;
     }
     const total = Number(bankAmount||0)+Number(cashAmount||0);
@@ -120,7 +121,7 @@ export default function TransactionsPage() {
               {(transactions||[]).map((t,i) => (
                 <tr key={t.id} className="border-t text-sm">
                   <td className="px-3 py-2">{i+1}</td>
-                  <td className="px-3 py-2">{t.transactionDate ? t.transactionDate.toISOString().slice(0,10) : ''}</td>
+                  <td className="px-3 py-2">{t.transactionDate ? t.transactionDate.toLocaleDateString('en-GB') : ''}</td>
                   <td className="px-3 py-2">{projects?.find(p => p.id===t.projectId)?.name || t.projectId}</td>
                   <td className="px-3 py-2">{parties?.find(p => p.id===t.partyId)?.name || t.partyId || '-'}</td>
                   <td className="px-3 py-2">{flats?.find(f => f.id===t.flatId)?.flatNo || t.flatId || '-'}</td>

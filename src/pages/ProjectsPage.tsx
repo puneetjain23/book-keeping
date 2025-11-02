@@ -5,6 +5,7 @@ import { newRecord } from '../db/utils'
 import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
+import { toast } from 'react-toastify';
 
 export default function ProjectsPage(){
   const projects = useLiveQuery(()=> db.projects.orderBy('createdAt').reverse().toArray(), [])
@@ -13,7 +14,7 @@ export default function ProjectsPage(){
   const [editingId, setEditingId] = useState<string|undefined>(undefined)
 
   const create = async () => {
-    if(!name.trim()) return alert('Name required')
+    if(!name.trim()) return toast.error('Name required')
     if(editingId){
       await db.projects.update(editingId, { name, notes, modifiedAt: new Date().toISOString() })
       setEditingId(undefined)
@@ -35,7 +36,7 @@ export default function ProjectsPage(){
     const txCount = await db.transactions.where('projectId').equals(id).count();
 
     if (flatsCount > 0 || txCount > 0) {
-      alert('Cannot delete project: it has dependent flats or transactions.');
+      toast.error('Cannot delete project: it has dependent flats or transactions.');
       return;
     }
 

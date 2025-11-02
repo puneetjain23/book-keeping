@@ -6,6 +6,7 @@ import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import Button from '../components/ui/Button'
+import { toast } from 'react-toastify';
 
 export default function FlatsPage(){
   const projects = useLiveQuery(()=> db.projects.toArray(), [])
@@ -21,8 +22,8 @@ export default function FlatsPage(){
   useEffect(()=>{ if(projects && projects.length && !projectId) setProjectId(projects[0].id); }, [projects])
 
   const create = async () => {
-    if(!projectId) return alert('Project required')
-    if(!flatNo.trim()) return alert('Flat no required')
+    if(!projectId) return toast.error('Project required')
+    if(!flatNo.trim()) return toast.error('Flat no required')
     const amount = Number(area||0) * Number(rate||0)
     if(editingId){
       await db.flats.update(editingId, { projectId, partyId, flatNo, areaSqft: area, ratePerSqft: rate, amount, modifiedAt: new Date().toISOString() })
@@ -49,7 +50,7 @@ export default function FlatsPage(){
     const txCount = await db.transactions.where('flatId').equals(id).count();
 
     if (txCount > 0) {
-      alert('Cannot delete flat: it has dependent transactions.');
+      toast.error('Cannot delete flat: it has dependent transactions.');
       return;
     }
 

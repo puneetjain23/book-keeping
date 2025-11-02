@@ -35,7 +35,6 @@ export default function ReportsPage(){
           </Select>
           <div className="flex items-center gap-2">
             <Button onClick={()=>exportAllToExcel()}>Export All</Button>
-            <Button onClick={()=>alert('Export filtered not yet implemented')}>Export Filtered</Button>
           </div>
         </div>
       </Card>

@@ -5,6 +5,7 @@ import { newRecord } from '../db/utils'
 import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
+import { toast } from 'react-toastify';
 
 export default function PartiesPage(){
   const parties = useLiveQuery(()=> db.parties.orderBy('createdAt').reverse().toArray(), [])
@@ -14,7 +15,7 @@ export default function PartiesPage(){
   const [editingId, setEditingId] = useState<string|undefined>(undefined)
 
   const create = async () => {
-    if(!name.trim()) return alert('Name required')
+    if(!name.trim()) return toast.error('Name required')
     if(editingId){
       await db.parties.update(editingId, { name, contact, address, modifiedAt: new Date().toISOString() })
       setEditingId(undefined)
@@ -36,7 +37,7 @@ export default function PartiesPage(){
     const txCount = await db.transactions.where('partyId').equals(id).count();
 
     if (flatsCount > 0 || txCount > 0) {
-      alert('Cannot delete party: it has dependent flats or transactions.');
+      toast.error('Cannot delete party: it has dependent flats or transactions.');
       return;
     }
 

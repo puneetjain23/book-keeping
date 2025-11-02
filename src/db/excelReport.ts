@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { db } from './db';
+import { toast } from 'react-toastify';
 
 interface ReportFilters {
   projectId?: string;
@@ -151,5 +152,5 @@ export async function generateExcelReport(filters: ReportFilters) {
     a.download = `Owner_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
     a.click();
     window.URL.revokeObjectURL(url);
-  alert(`Excel report generated: ${fileName}`);
+  toast.success(`Excel report generated: ${fileName}`);
 }

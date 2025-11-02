@@ -5,9 +5,13 @@ import ProjectsPage from './pages/ProjectsPage'
 import PartiesPage from './pages/PartiesPage'
 import FlatsPage from './pages/FlatsPage'
 import ReportsPage from './pages/ReportsPage'
+import AIAssistantPage from './pages/AIAssistantPage'
+
 import './styles/tailwind.css'
 import { Menu, X } from 'lucide-react';
 import LoginPage from './pages/LoginPage';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 type Route = 'dashboard' | 'transactions' | 'projects' | 'parties' | 'flats' | 'reports'
 
@@ -27,6 +31,7 @@ export default function App() {
   };
 
   const links = [
+    { label: 'AI Assistant', route: 'aiassistant'},
     { label: 'Dashboard', route: 'dashboard' },
     { label: 'Transactions', route: 'transactions' },
     { label: 'Projects', route: 'projects' },
@@ -38,6 +43,8 @@ export default function App() {
   return !isLoggedIn ? 
     <LoginPage onLogin={() => setIsLoggedIn(true)} />
   : (
+    <>   
+    <ToastContainer position="top-right" autoClose={20000} />
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <div className="container mx-auto px-4 md:px-8 py-6">
         <header className="flex items-center justify-between mb-6">
@@ -87,6 +94,7 @@ export default function App() {
         )}
 
         <main className="space-y-6 sm:scale-100 scale-90">
+          {route === 'aiassistant' && <AIAssistantPage />}
           {route === 'dashboard' && <DashboardPage />}
           {route === 'transactions' && <TransactionsPage />}
           {route === 'projects' && <ProjectsPage />}
@@ -100,5 +108,6 @@ export default function App() {
         </footer>
       </div>
     </div>
+    </>
   );
 }
