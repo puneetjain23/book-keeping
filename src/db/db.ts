@@ -13,7 +13,8 @@ class MyDB extends Dexie {
       projects: 'id, name, createdAt, modifiedAt',
       parties: 'id, name, contact, createdAt, modifiedAt',
       flats: 'id, projectId, partyId, flatNo, amount, createdAt, modifiedAt',
-      transactions: 'id, projectId, partyId, flatId, totalAmount, transactionDate, createdAt, modifiedAt'
+      transactions:
+        'id, projectId, partyId, flatId, totalAmount, transactionDate, createdAt, modifiedAt',
     });
   }
 }

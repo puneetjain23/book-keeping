@@ -7,7 +7,7 @@ export async function exportAllToExcel() {
     db.projects.toArray(),
     db.parties.toArray(),
     db.flats.toArray(),
-    db.transactions.toArray()
+    db.transactions.toArray(),
   ]);
 
   const wb = XLSX.utils.book_new();
@@ -21,7 +21,7 @@ export async function exportAllToExcel() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `bookkeeping-export-${new Date().toISOString().slice(0,10)}.xlsx`;
+  a.download = `bookkeeping-export-${new Date().toISOString().slice(0, 10)}.xlsx`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -35,7 +35,13 @@ export async function importFromExcel(file: File) {
     for (const r of rows) {
       const id = r.id || uuidv4();
       const now = new Date().toISOString();
-      const record = { ...r, id, createdAt: r.createdAt || now, modifiedAt: now, transactionDate: new Date(r.transactionDate) };
+      const record = {
+        ...r,
+        id,
+        createdAt: r.createdAt || now,
+        modifiedAt: now,
+        transactionDate: new Date(r.transactionDate),
+      };
       await table.put(record);
     }
   }
@@ -54,7 +60,7 @@ export async function clearAllData() {
       db.projects.clear(),
       db.parties.clear(),
       db.flats.clear(),
-      db.transactions.clear()
+      db.transactions.clear(),
     ]);
   });
 }

@@ -1,3 +1,8 @@
 node_modules
 dist
 *.zip
+.prettierignore
+.prettierrc
+.eslintignore
+.eslintrc.json
+.vscode

@@ -28,22 +28,58 @@ export default function AIAssistantPage() {
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const aiInputRef = useRef<HTMLInputElement>(null);
   const [logs, setLogs] = useState<AILog[]>([]);
-  const [selectedContext, setSelectedContext] = useState<{ type: 'flat' | 'party' | null; id?: string; name?: string }>({
+  const [selectedContext, setSelectedContext] = useState<{
+    type: 'flat' | 'party' | null;
+    id?: string;
+    name?: string;
+  }>({
     type: null,
   });
 
   // --- Auto-suggestions ---
   useEffect(() => {
     if (!aiInput) return setSuggestions([]);
-    const flatMatches =
-      flats
-        ?.filter(f => f.flatNo.toLowerCase().includes(aiInput.toLowerCase()))
-        .map(f => ({ display: `Flat : ${f.flatNo}`, value: f.flatNo })) || [];
-    const partyMatches =
-      parties
-        ?.filter(p => p.name.toLowerCase().includes(aiInput.toLowerCase()))
-        .map(p => ({ display: `Party : ${p.name}`, value: p.name })) || [];
-    setSuggestions([...flatMatches, ...partyMatches].slice(0, 5));
+
+    const lower = aiInput.toLowerCase();
+
+    // If user starts with "flat" or "party", detect what they’re searching
+    const isFlatSearch = lower.startsWith('flat');
+    const isPartySearch = lower.startsWith('party');
+
+    // Extract the actual search term after "flat" or "party"
+    const actualSearch = lower
+      .replace(/^flat\s*/i, '')
+      .replace(/^party\s*/i, '')
+      .trim();
+
+    let flatMatches: { display: string; value: string }[] = [];
+    let partyMatches: { display: string; value: string }[] = [];
+
+    // If starts with "flat", show all flats or filtered ones
+    if (isFlatSearch) {
+      flatMatches =
+        flats
+          ?.filter(f =>
+            !actualSearch
+              ? true // show all flats if nothing typed after 'flat'
+              : f.flatNo.toLowerCase().includes(actualSearch)
+          )
+          .map(f => ({ display: `Flat : ${f.flatNo}`, value: f.flatNo })) || [];
+    }
+
+    // If starts with "party", show all parties or filtered ones
+    if (isPartySearch) {
+      partyMatches =
+        parties
+          ?.filter(p =>
+            !actualSearch
+              ? true // show all parties if nothing typed after 'party'
+              : p.name.toLowerCase().includes(actualSearch)
+          )
+          .map(p => ({ display: `Party : ${p.name}`, value: p.name })) || [];
+    }
+
+    setSuggestions([...flatMatches, ...partyMatches].slice(0, 10));
     setHighlightedIndex(0);
   }, [aiInput, flats, parties]);
 
@@ -81,7 +117,10 @@ export default function AIAssistantPage() {
   const handleAIExecute = async () => {
     const input = aiInput.trim();
     if (!input.toLowerCase().startsWith('flat') && !input.toLowerCase().startsWith('party')) {
-      setLogs(prev => [...prev, { type: 'error', message: 'Start with "flat" or "party" command' }]);
+      setLogs(prev => [
+        ...prev,
+        { type: 'error', message: 'Start with "flat" or "party" command' },
+      ]);
       return;
     }
 
@@ -94,7 +133,7 @@ export default function AIAssistantPage() {
 
     // --- Flat Transaction ---
     if (flatMatch) {
-      const flatNo = flatMatch[0].toUpperCase();
+      const flatNo = flatMatch[1].toUpperCase();
       const matchedFlats = flats?.filter(f => f.flatNo.toUpperCase() === flatNo) || [];
       if (!matchedFlats.length)
         return setLogs(prev => [...prev, { type: 'error', message: `Flat ${flatNo} not found` }]);
@@ -106,16 +145,24 @@ export default function AIAssistantPage() {
             .map(f => projects?.find(p => p.id === f.projectId)?.name)
             .join(', ')}`
         );
-        flat = matchedFlats.find(f => projects?.find(p => p.id === f.projectId)?.name === projectName);
+        flat = matchedFlats.find(
+          f => projects?.find(p => p.id === f.projectId)?.name === projectName
+        );
       }
 
       if (!bankMatch && !cashMatch)
-        return setLogs(prev => [...prev, { type: 'error', message: 'Bank or Cash amount required' }]);
+        return setLogs(prev => [
+          ...prev,
+          { type: 'error', message: 'Bank or Cash amount required' },
+        ]);
       const bankAmount = bankMatch ? parseFloat(bankMatch[1]) : 0;
       const cashAmount = cashMatch ? parseFloat(cashMatch[1]) : 0;
       const totalAmount = bankAmount + cashAmount;
       if (totalAmount <= 0)
-        return setLogs(prev => [...prev, { type: 'error', message: 'Total amount must be greater than zero' }]);
+        return setLogs(prev => [
+          ...prev,
+          { type: 'error', message: 'Total amount must be greater than zero' },
+        ]);
 
       const transactionDate = dateMatch ? parseFlexibleDate(dateMatch[1]) : new Date();
       if (!transactionDate)
@@ -129,7 +176,7 @@ export default function AIAssistantPage() {
         bankAmount,
         cashAmount,
         totalAmount,
-        transactionDate: transactionDate.toISOString(),
+        transactionDate: transactionDate,
         createdAt: new Date().toISOString(),
         modifiedAt: new Date().toISOString(),
       });
@@ -149,19 +196,21 @@ export default function AIAssistantPage() {
     // --- Party Lookup ---
     if (partyMatch) {
       const partyName = partyMatch[1];
-      const matchedParties = parties?.filter(p =>
-        p.name.toLowerCase().includes(partyName.toLowerCase())
-      ) || [];
+      const matchedParties =
+        parties?.filter(p => p.name.toLowerCase().includes(partyName.toLowerCase())) || [];
       if (!matchedParties.length)
-        return setLogs(prev => [...prev, { type: 'error', message: `Party ${partyName} not found` }]);
+        return setLogs(prev => [
+          ...prev,
+          { type: 'error', message: `Party ${partyName} not found` },
+        ]);
 
       let party = matchedParties[0];
-      if (matchedParties.length > 1) {
-        const chosen = prompt(
-          `Multiple matches found. Choose exact party: ${matchedParties.map(p => p.name).join(', ')}`
-        );
-        party = matchedParties.find(p => p.name === chosen);
-      }
+      //   if (matchedParties.length > 1) {
+      //     const chosen = prompt(
+      //       `Multiple matches found. Choose exact party: ${matchedParties.map(p => p.name).join(', ')}`
+      //     );
+      //     party = matchedParties.find(p => p.name === chosen);
+      //   }
 
       const completionPercent = completionMatch ? parseInt(completionMatch[1], 10) : 100;
 
@@ -173,7 +222,7 @@ export default function AIAssistantPage() {
 
       setSelectedContext({ type: 'party', id: party.id, name: party.name });
       setLogs(prev => [
-        ...prev,
+        // ...prev,
         {
           type: 'info',
           message: `Party: ${party.name}, Completion: ${completionPercent}%, Expected: ${totalExpected}, Paid: ${totalReceived}, Balance: ${
@@ -189,8 +238,8 @@ export default function AIAssistantPage() {
     selectedContext.type === 'party'
       ? transactions?.filter(t => t.partyId === selectedContext.id) || []
       : selectedContext.type === 'flat'
-      ? transactions?.filter(t => t.flatId === selectedContext.id) || []
-      : [];
+        ? transactions?.filter(t => t.flatId === selectedContext.id) || []
+        : [];
 
   return (
     <section className="max-w-5xl mx-auto p-4 space-y-6">
@@ -224,7 +273,11 @@ export default function AIAssistantPage() {
                   onClick={() => applyAISuggestion(s)}
                 >
                   {parts.map((part, idx) =>
-                    regex.test(part) ? <strong key={idx}>{part}</strong> : <span key={idx}>{part}</span>
+                    regex.test(part) ? (
+                      <strong key={idx}>{part}</strong>
+                    ) : (
+                      <span key={idx}>{part}</span>
+                    )
                   )}
                 </li>
               );
@@ -250,8 +303,8 @@ export default function AIAssistantPage() {
               log.type === 'success'
                 ? 'bg-green-100 text-green-800'
                 : log.type === 'error'
-                ? 'bg-red-100 text-red-800'
-                : 'bg-slate-100 text-slate-800'
+                  ? 'bg-red-100 text-red-800'
+                  : 'bg-slate-100 text-slate-800'
             }`}
           >
             {log.message}

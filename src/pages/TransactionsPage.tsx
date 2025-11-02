@@ -9,21 +9,26 @@ import Button from '../components/ui/Button';
 import { toast } from 'react-toastify';
 
 export default function TransactionsPage() {
-  const projects = useLiveQuery(()=> db.projects.toArray(), []);
-  const parties = useLiveQuery(()=> db.parties.toArray(), []);
-  const [projectId, setProjectId] = useState<string|undefined>(undefined);
-  const [partyId, setPartyId] = useState<string|undefined>(undefined);
-  const [flatId, setFlatId] = useState<string|undefined>(undefined);
+  const projects = useLiveQuery(() => db.projects.toArray(), []);
+  const parties = useLiveQuery(() => db.parties.toArray(), []);
+  const flats = useLiveQuery(() => db.flats.toArray(), []);
+
+  const [projectId, setProjectId] = useState<string | undefined>(undefined);
+  const [partyId, setPartyId] = useState<string | undefined>(undefined);
+  const [flatId, setFlatId] = useState<string | undefined>(undefined);
   const [bankAmount, setBankAmount] = useState<any>('');
   const [cashAmount, setCashAmount] = useState<any>('');
-  const [editingId, setEditingId] = useState<string|undefined>(undefined);
+  const [editingId, setEditingId] = useState<string | undefined>(undefined);
 
   const [selectedProject, setSelectedProject] = useState<string | undefined>();
   const [selectedParty, setSelectedParty] = useState<string | undefined>();
   const [selectedFlat, setSelectedFlat] = useState<string | undefined>();
   const [transactionDate, setTransactionDate] = useState<Date | undefined>();
-  const flats = useLiveQuery(()=> projectId ? db.flats.where('projectId').equals(projectId).toArray() : db.flats.toArray(), [projectId]);
-  const transactions = useLiveQuery(()=> db.transactions.orderBy('createdAt').reverse().toArray(), []);
+
+  const transactions = useLiveQuery(
+    () => db.transactions.orderBy('createdAt').reverse().toArray(),
+    []
+  );
   const flatsDropdown = useLiveQuery(() => {
     let query = db.flats.toCollection();
 
@@ -32,58 +37,118 @@ export default function TransactionsPage() {
 
     return query.toArray();
   }, [selectedProject, selectedParty]);
-  useEffect(()=>{ if(projects && projects.length && !projectId) setProjectId(projects[0].id); }, [projects]);
+  useEffect(() => {
+    if (projects && projects.length && !projectId) setProjectId(projects[0].id);
+  }, [projects]);
 
-  const reset = ()=>{ setBankAmount(0); setCashAmount(0); setFlatId(undefined); setPartyId(undefined); setEditingId(undefined); }
+  const reset = () => {
+    setBankAmount(0);
+    setCashAmount(0);
+    setFlatId(undefined);
+    setPartyId(undefined);
+    setEditingId(undefined);
+  };
 
   const onCreate = async () => {
     if (!projectId || !partyId || !flatId || !bankAmount || !cashAmount || !transactionDate) {
       toast.error('Please fill in all fields before creating the transaction.');
       return;
     }
-    const total = Number(bankAmount||0)+Number(cashAmount||0);
-    if(editingId){
-      await db.transactions.update(editingId, { projectId, partyId, flatId, bankAmount, cashAmount, transactionDate, totalAmount: total, modifiedAt: new Date().toISOString() })
+    const total = Number(bankAmount || 0) + Number(cashAmount || 0);
+    if (editingId) {
+      await db.transactions.update(editingId, {
+        projectId,
+        partyId,
+        flatId,
+        bankAmount,
+        cashAmount,
+        transactionDate,
+        totalAmount: total,
+        modifiedAt: new Date().toISOString(),
+      });
       reset();
     } else {
-      const rec:any = newRecord({ projectId, partyId, flatId, bankAmount, cashAmount, transactionDate, totalAmount: total, mode: 'receipt' });
+      const rec: any = newRecord({
+        projectId,
+        partyId,
+        flatId,
+        bankAmount,
+        cashAmount,
+        transactionDate,
+        totalAmount: total,
+        mode: 'receipt',
+      });
       await db.transactions.add(rec);
       reset();
     }
   };
 
-  const onEdit = (id:string)=> {
-    const t = transactions?.find(x=>x.id===id);
-    if(!t) return;
+  const onEdit = (id: string) => {
+    const t = transactions?.find(x => x.id === id);
+    if (!t) return;
     setEditingId(id);
     setProjectId(t.projectId);
     setPartyId(t.partyId);
     setFlatId(t.flatId);
     setBankAmount(t.bankAmount);
     setCashAmount(t.cashAmount);
-  }
+  };
 
-  const onDelete = async (id:string) => {
-    if(!confirm('Delete transaction?')) return;
+  const onDelete = async (id: string) => {
+    if (!confirm('Delete transaction?')) return;
     await db.transactions.delete(id);
-  }
+  };
 
   return (
     <section id="transactions" className="space-y-4">
       <Card>
-        <h3 className="font-semibold mb-2">{editingId ? 'Edit Transaction' : 'Create Transaction'}</h3>
+        <h3 className="font-semibold mb-2">
+          {editingId ? 'Edit Transaction' : 'Create Transaction'}
+        </h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <Select value={projectId} onChange={e=>{setProjectId(e.target.value); setSelectedProject(e.target.value); setSelectedFlat(undefined);}}>
+          <Select
+            value={projectId}
+            onChange={e => {
+              setProjectId(e.target.value);
+              setSelectedProject(e.target.value);
+              setSelectedFlat(undefined);
+            }}
+          >
             <option value="">-- Project --</option>
-            {(projects||[]).map(p=> <option key={p.id} value={p.id}>{p.name}</option>)}
+            {(projects || []).map(p => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
           </Select>
-          <Select value={partyId} onChange={e=>{setPartyId(e.target.value); setSelectedParty(e.target.value); setSelectedFlat(undefined);}}>
+          <Select
+            value={partyId}
+            onChange={e => {
+              setPartyId(e.target.value);
+              setSelectedParty(e.target.value);
+              setSelectedFlat(undefined);
+            }}
+          >
             <option value="">-- Party --</option>
-            {(parties||[]).map(p=> <option key={p.id} value={p.id}>{p.name}</option>)}
+            {(parties || []).map(p => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
           </Select>
-          <Select value={flatId} onChange={e=>{ setFlatId(e.target.value); setSelectedFlat(e.target.value)}}>
+          <Select
+            value={flatId}
+            onChange={e => {
+              setFlatId(e.target.value);
+              setSelectedFlat(e.target.value);
+            }}
+          >
             <option value="">-- Flat --</option>
-            {(flatsDropdown||[]).map(f=> <option key={f.id} value={f.id}>{f.flatNo}</option>)}
+            {(flatsDropdown || []).map(f => (
+              <option key={f.id} value={f.id}>
+                {f.flatNo}
+              </option>
+            ))}
           </Select>
           <Input
             type="date"
@@ -91,12 +156,24 @@ export default function TransactionsPage() {
             onChange={e => setTransactionDate(new Date(e.target.value))}
             placeholder="Transaction Date"
           />
-          <Input value={bankAmount} onChange={e=>setBankAmount((e.target.value))} placeholder="Bank" />
-          <Input value={cashAmount} onChange={e=>setCashAmount((e.target.value))} placeholder="Cash" />
+          <Input
+            value={bankAmount}
+            onChange={e => setBankAmount(e.target.value)}
+            placeholder="Bank"
+          />
+          <Input
+            value={cashAmount}
+            onChange={e => setCashAmount(e.target.value)}
+            placeholder="Cash"
+          />
         </div>
         <div className="mt-3 text-right">
           <Button onClick={onCreate}>{editingId ? 'Save' : 'Create'}</Button>
-          {editingId && <button className="ml-2 px-3 py-2 rounded border" onClick={reset}>Cancel</button>}
+          {editingId && (
+            <button className="ml-2 px-3 py-2 rounded border" onClick={reset}>
+              Cancel
+            </button>
+          )}
         </div>
       </Card>
 
@@ -118,19 +195,31 @@ export default function TransactionsPage() {
               </tr>
             </thead>
             <tbody>
-              {(transactions||[]).map((t,i) => (
+              {(transactions || []).map((t, i) => (
                 <tr key={t.id} className="border-t text-sm">
-                  <td className="px-3 py-2">{i+1}</td>
-                  <td className="px-3 py-2">{t.transactionDate ? t.transactionDate.toLocaleDateString('en-GB') : ''}</td>
-                  <td className="px-3 py-2">{projects?.find(p => p.id===t.projectId)?.name || t.projectId}</td>
-                  <td className="px-3 py-2">{parties?.find(p => p.id===t.partyId)?.name || t.partyId || '-'}</td>
-                  <td className="px-3 py-2">{flats?.find(f => f.id===t.flatId)?.flatNo || t.flatId || '-'}</td>
+                  <td className="px-3 py-2">{i + 1}</td>
+                  <td className="px-3 py-2">
+                    {t.transactionDate ? t.transactionDate.toLocaleDateString('en-GB') : ''}
+                  </td>
+                  <td className="px-3 py-2">
+                    {projects?.find(p => p.id === t.projectId)?.name || t.projectId}
+                  </td>
+                  <td className="px-3 py-2">
+                    {parties?.find(p => p.id === t.partyId)?.name || t.partyId || '-'}
+                  </td>
+                  <td className="px-3 py-2">
+                    {flats?.find(f => f.id === t.flatId)?.flatNo || t.flatId || '-'}
+                  </td>
                   <td className="px-3 py-2">{t.bankAmount}</td>
                   <td className="px-3 py-2">{t.cashAmount}</td>
                   <td className="px-3 py-2">{t.totalAmount}</td>
                   <td className="px-3 py-2">
-                    <button className="mr-2 text-sm" onClick={() => onEdit(t.id)}>Edit</button>
-                    <button className="text-sm text-red-600" onClick={() => onDelete(t.id)}>Delete</button>
+                    <button className="mr-2 text-sm" onClick={() => onEdit(t.id)}>
+                      Edit
+                    </button>
+                    <button className="text-sm text-red-600" onClick={() => onDelete(t.id)}>
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -139,5 +228,5 @@ export default function TransactionsPage() {
         </div>
       </Card>
     </section>
-  )
+  );
 }

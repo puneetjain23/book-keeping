@@ -43,7 +43,14 @@ export default function DashboardPage() {
     const arr = Array.from(map.values()).map((it: any, idx: number) => {
       const party = allParties.find(p => p.id === it.partyId);
       const percent = 100 - (it.expected === 0 ? 0 : Math.round((it.received / it.expected) * 100));
-      return { sNo: idx + 1, partyId: it.partyId, partyName: party?.name || 'Unknown Party', received: it.received, expected: it.expected, percent };
+      return {
+        sNo: idx + 1,
+        partyId: it.partyId,
+        partyName: party?.name || 'Unknown Party',
+        received: it.received,
+        expected: it.expected,
+        percent,
+      };
     });
 
     const filtered = selectedParty ? arr.filter(a => a.partyId === selectedParty) : arr;
@@ -56,10 +63,13 @@ export default function DashboardPage() {
     setGrid(g);
   };
 
-  useEffect(() => { refresh(); }, [selectedProject, completion, selectedParty]);
+  useEffect(() => {
+    refresh();
+  }, [selectedProject, completion, selectedParty]);
 
   const onImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]; if (!f) return;
+    const f = e.target.files?.[0];
+    if (!f) return;
     await importFromExcel(f);
     toast.error('Imported');
     e.currentTarget.value = '';
@@ -68,21 +78,43 @@ export default function DashboardPage() {
 
   return (
     <section className="space-y-4">
-
       {/* Filters */}
       <div className="bg-white/90 p-4 rounded-2xl shadow-lg grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-        <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)} className="input p-2 rounded">
+        <select
+          value={selectedProject}
+          onChange={e => setSelectedProject(e.target.value)}
+          className="input p-2 rounded"
+        >
           <option value="">-- Select Project --</option>
-          {(projects || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          {(projects || []).map(p => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
         </select>
-        <select value={selectedParty} onChange={e => setSelectedParty(e.target.value)} className="input p-2 rounded">
+        <select
+          value={selectedParty}
+          onChange={e => setSelectedParty(e.target.value)}
+          className="input p-2 rounded"
+        >
           <option value="">-- Party (optional) --</option>
-          {(parties || []).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          {(parties || []).map(p => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
         </select>
         <div className="flex items-center gap-2">
           <label className="text-sm">Completion %</label>
-          <input type="number" value={completion} onChange={e => setCompletion(Number(e.target.value || 0))} className="input p-2 rounded w-28" />
-          <button onClick={refresh} className="px-3 py-2 rounded-xl bg-slate-700 text-white">Apply</button>
+          <input
+            type="number"
+            value={completion}
+            onChange={e => setCompletion(Number(e.target.value || 0))}
+            className="input p-2 rounded w-28"
+          />
+          <button onClick={refresh} className="px-3 py-2 rounded-xl bg-slate-700 text-white">
+            Apply
+          </button>
         </div>
       </div>
 
@@ -92,7 +124,11 @@ export default function DashboardPage() {
         <table className="table-fixed min-w-[600px] w-full text-left">
           <thead>
             <tr className="text-sm text-slate-500">
-              <th>#</th><th>Party</th><th>Received</th><th>Expected</th><th>Difference (%)</th>
+              <th>#</th>
+              <th>Party</th>
+              <th>Received</th>
+              <th>Expected</th>
+              <th>Difference (%)</th>
             </tr>
           </thead>
           <tbody>
@@ -111,12 +147,43 @@ export default function DashboardPage() {
 
       {/* Import/Export Buttons */}
       <div className="bg-white/90 p-4 rounded-2xl shadow-lg flex flex-col sm:flex-row gap-2 sm:items-center">
-        <input type="file" className="input p-2 rounded w-full sm:w-auto" accept=".xlsx,.xls" onChange={onImport} />
-        <button onClick={() => exportAllToExcel()} className="px-3 py-2 rounded-xl bg-indigo-600 text-white w-full sm:w-auto">Export</button>
-        <button onClick={async () => { if (confirm('Clear all local DB?')) { await clearAllData(); toast.error('Cleared'); refresh(); } }} className="px-3 py-2 rounded-xl bg-red-600 text-white w-full sm:w-auto">Clear all</button>
-        <button onClick={() => generateExcelReport({ projectId: selectedProject, partyId: selectedParty, completionPercent: completion })} className="px-3 py-2 rounded-xl bg-red-600 text-white w-full sm:w-auto">Generate Report</button>
+        <input
+          type="file"
+          className="input p-2 rounded w-full sm:w-auto"
+          accept=".xlsx,.xls"
+          onChange={onImport}
+        />
+        <button
+          onClick={() => exportAllToExcel()}
+          className="px-3 py-2 rounded-xl bg-indigo-600 text-white w-full sm:w-auto"
+        >
+          Export
+        </button>
+        <button
+          onClick={async () => {
+            if (confirm('Clear all local DB?')) {
+              await clearAllData();
+              toast.error('Cleared');
+              refresh();
+            }
+          }}
+          className="px-3 py-2 rounded-xl bg-red-600 text-white w-full sm:w-auto"
+        >
+          Clear all
+        </button>
+        <button
+          onClick={() =>
+            generateExcelReport({
+              projectId: selectedProject,
+              partyId: selectedParty,
+              completionPercent: completion,
+            })
+          }
+          className="px-3 py-2 rounded-xl bg-red-600 text-white w-full sm:w-auto"
+        >
+          Generate Report
+        </button>
       </div>
-
     </section>
   );
 }
