@@ -28,7 +28,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <div className="container mx-auto px-4 md:px-8 py-6">
         <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl md:text-3xl font-extrabold">Accounting - Ashok</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold">Accounting</h1>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex space-x-3 text-sm text-slate-600">
